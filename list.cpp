@@ -1,16 +1,22 @@
 #include <iostream>
 #include <memory>
 
-typedef struct LinkedList {
-  int         value;
-  LinkedList* next;
-} LinkedList;
+using std::string;
 
-LinkedList* create(int val);
-LinkedList* push(LinkedList*, int val);
-LinkedList* pop(LinkedList* l);
-int         length(LinkedList* l);
-int         get(LinkedList* l, int position);
+template <typename T>
+struct LinkedList {
+  T              value;
+  LinkedList<T>* next;
+};
+
+template <typename T> LinkedList<T>* create(T val);
+template <typename T> LinkedList<T>* push(LinkedList<T>*, T val);
+template <typename T> LinkedList<T>* pop(LinkedList<T>* l);
+template <typename T> int            length(LinkedList<T>* l);
+template <typename T> T              get(LinkedList<T>* l, int position);
+
+typedef std::shared_ptr<LinkedList<string> > StringListPtr;
+
 
 int main() {
   int count = 0;
@@ -27,17 +33,18 @@ int main() {
     std::cout << "val: " << get(l4, 0) << std::endl;
 
   }*/
-  LinkedList * l1 = create(1);
-  std::shared_ptr<LinkedList> l(l1);
+  LinkedList<string> * l1 = create(string("abc"));
+  //std::shared_ptr<LinkedList<string> > l(l1);
+  StringListPtr l(l1);
   l->value = 1;
-  std::weak_ptr<LinkedList> l2 = l;
+  std::weak_ptr<LinkedList<string> > l2 = l;
 
   //l->value = 10;
   //delete l.get();
   //l.reset();
 
-  std::shared_ptr<LinkedList> l3 = l2.lock();
-  l3->value = 3;
+  std::shared_ptr<LinkedList<string> > l3 = l2.lock();
+  l3->value = "def";
   //std::cout << "val: " <<l ->value << std::endl;
   std::cout << "val: " << l3->value << std::endl;
 
@@ -46,28 +53,31 @@ int main() {
 }
 
 
-
-LinkedList* create(int val) {
-  LinkedList* l = new LinkedList;
+template <typename T>
+LinkedList<T>* create(T val) {
+  LinkedList<T>* l = new LinkedList<T>;
   l->value = val;
   l->next  = 0;
   return l;
 }
 
-LinkedList* push(LinkedList* l, int val) {
-  LinkedList* l2 = new LinkedList;
+template <typename T>
+LinkedList<T>* push(LinkedList<T>* l, T val) {
+  LinkedList<T>* l2 = new LinkedList<T>;
   l2->value = val;
   l2->next  = l;
   return l2;
 }
 
-LinkedList* pop(LinkedList* l) {
-  LinkedList* l2 = l->next;
+template <typename T>
+LinkedList<T>* pop(LinkedList<T>* l) {
+  LinkedList<T>* l2 = l->next;
   delete l;
   return l2;
 }
 
-int length(LinkedList* l) {
+template <typename T>
+int length(LinkedList<T>* l) {
   if (l == 0) {
     return 0;
   } else {
@@ -75,9 +85,10 @@ int length(LinkedList* l) {
   }
 }
 
-int get(LinkedList* l, int position) {
+template <typename T>
+T get(LinkedList<T>* l, int position) {
   if(l == 0) {
-    return -1;
+    throw;
   }
 
   if(position == 0) {
