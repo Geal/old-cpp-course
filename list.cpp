@@ -8,6 +8,7 @@ class Option {
   public:
     virtual bool is_some() = 0;
     virtual T    get()     = 0;
+    virtual      ~Option<T>() {}
 };
 
 template<class T>
@@ -58,6 +59,40 @@ T Some<T>::get() {
   return value;
 }
 
+template<class T, class U>
+class Result {
+  public:
+    virtual bool       is_ok()     = 0;
+    virtual T          get()       = 0;
+    virtual U          get_error() = 0;
+    virtual Option<T>* to_option() = 0;
+    virtual            ~Result<T,U>() {}
+};
+
+template<class T, class U>
+class Ok: public Result<T,U> {
+  private:
+    T value;
+  public:
+                       Ok<T>(T value) { this->value = value;       }
+    virtual bool       is_ok()        { return true;               }
+    virtual T          get()          { return value;              }
+    virtual U          get_error()    { throw;                     }
+    virtual Option<T>* to_option()    { return new Some<T>(value); }
+};
+
+template<class T, class U>
+class Err: public Result<T,U> {
+  private:
+    U error;
+  public:
+                       Err<U>(U error) { this->error = error;  }
+    virtual bool       is_ok()         { return false;         }
+    virtual T          get()           { throw;                }
+    virtual U          get_error()     { return error;         }
+    virtual Option<T>* to_option()     { return new None<T>(); }
+};
+
 template<class T>
 struct Node {
   T value;
@@ -70,11 +105,11 @@ class LinkedList {
   Node<T>* list;
 
   public:
-             LinkedList<T> (T val);
-  void       push(T val);
-  void       pop();
-  int        length();
-  Option<T>* get(int position);
+                    LinkedList<T> (T val);
+  void              push(T val);
+  void              pop();
+  int               length();
+  Result<T,string>* get(int position);
 };
 
 
@@ -84,10 +119,16 @@ int main() {
 
   l1.push("def");
 
-  Option<string>* res = l1.get(1);
-  if(res->is_some()) {
+  Result<string,string>* res = l1.get(1);
+  if(res->is_ok()) {
     std::cout << "val: " << res->get() << std::endl;
   }
+  Option<string>* opt = res->to_option();
+  if(opt->is_some()) {
+    std::cout << "val: " << opt->get() << std::endl;
+  }
+  delete opt;
+  delete res;
 
   std::cout << "length: " << l1.length() << std::endl;
 
@@ -139,17 +180,17 @@ int LinkedList<T>::length() {
 }
 
 template <typename T>
-Option<T>* LinkedList<T>::get(int position) {
+Result<T,string>* LinkedList<T>::get(int position) {
   Node<T>* tmp = this->list;
   int val = 0;
   while(tmp != 0) {
     if(val == position) {
-      return new Some<T>(tmp->value);
+      return new Ok<T,string>(tmp->value);
     }
 
     tmp = tmp->next;
     val++;
   }
 
-  return new None<T>();
+  return new Err<T,string>("not found");
 }
