@@ -3,97 +3,136 @@
 
 using std::string;
 
-template <typename T>
-struct LinkedList {
-  T              value;
-  LinkedList<T>* next;
+template<class T>
+class Option {
+  private:
+    T    value;
+    bool has_value;
+
+  public:
+    bool is_some();
+    T    get();
+    Option<T>(T val);
+    Option<T>();
 };
 
-template <typename T> LinkedList<T>* create(T val);
-template <typename T> LinkedList<T>* push(LinkedList<T>*, T val);
-template <typename T> LinkedList<T>* pop(LinkedList<T>* l);
-template <typename T> int            length(LinkedList<T>* l);
-template <typename T> T              get(LinkedList<T>* l, int position);
+template<class T>
+Option<T>::Option(T val) {
+  this->has_value = true;
+  this->value     = val;
+}
 
-typedef std::shared_ptr<LinkedList<string> > StringListPtr;
+template<class T>
+Option<T>::Option() {
+  this->has_value = false;
+}
+
+template<class T>
+bool Option<T>::is_some() {
+  return has_value;
+}
+
+template<class T>
+T Option<T>::get() {
+  if(has_value) {
+    return value;
+  } else {
+    throw;
+  }
+}
+
+template<class T>
+struct Node {
+  T value;
+  Node<T>* next;
+};
+
+template <typename T>
+class LinkedList {
+  private:
+  Node<T>* list;
+
+  public:
+            LinkedList<T> (T val);
+  void      push(T val);
+  void      pop();
+  int       length();
+  Option<T> get(int position);
+};
 
 
 int main() {
   int count = 0;
-  /*while(count < 100) {
-    LinkedList* l = create(1);
-    std::cout << "val: " << get(l, 0) << std::endl;
+  LinkedList<string> l1 = LinkedList<string>(string("abc"));
 
-    LinkedList* l2 = push(l, 3);
-    std::cout << "val2:  " << get(l2, 0) << " " << get(l2, 1) << std::endl;
-    count += l2->value;
-    std::cout << count << std::endl;
-    LinkedList* l3 = pop(l2);
-    LinkedList* l4 = pop(l3);
-    std::cout << "val: " << get(l4, 0) << std::endl;
+  l1.push("def");
 
-  }*/
-  LinkedList<string> * l1 = create(string("abc"));
-  //std::shared_ptr<LinkedList<string> > l(l1);
-  StringListPtr l(l1);
-  l->value = 1;
-  std::weak_ptr<LinkedList<string> > l2 = l;
+  Option<string> res = l1.get(1);
+  if(res.is_some()) {
+    std::cout << "val: " << res.get() << std::endl;
+  }
 
-  //l->value = 10;
-  //delete l.get();
-  //l.reset();
+  std::cout << "length: " << l1.length() << std::endl;
 
-  std::shared_ptr<LinkedList<string> > l3 = l2.lock();
-  l3->value = "def";
-  //std::cout << "val: " <<l ->value << std::endl;
-  std::cout << "val: " << l3->value << std::endl;
-
+  l1.pop();
   //l2.reset();
   return count;
 }
 
 
 template <typename T>
-LinkedList<T>* create(T val) {
-  LinkedList<T>* l = new LinkedList<T>;
+LinkedList<T>::LinkedList(T val) {
+  Node<T>* l = new Node<T>;
   l->value = val;
   l->next  = 0;
-  return l;
+  this->list = l;
 }
 
 template <typename T>
-LinkedList<T>* push(LinkedList<T>* l, T val) {
-  LinkedList<T>* l2 = new LinkedList<T>;
+void LinkedList<T>::push(T val) {
+  Node<T>* l2 = new Node<T>;
   l2->value = val;
-  l2->next  = l;
-  return l2;
+  l2->next  = this->list;
+
+  this->list = l2;
 }
 
 template <typename T>
-LinkedList<T>* pop(LinkedList<T>* l) {
-  LinkedList<T>* l2 = l->next;
-  delete l;
-  return l2;
-}
-
-template <typename T>
-int length(LinkedList<T>* l) {
-  if (l == 0) {
-    return 0;
-  } else {
-    return 1 + length(l->next);
-  }
-}
-
-template <typename T>
-T get(LinkedList<T>* l, int position) {
-  if(l == 0) {
+void LinkedList<T>::pop() {
+  if(this->list == 0) {
     throw;
   }
 
-  if(position == 0) {
-    return l->value;
-  } else {
-    return get(l->next, position - 1);
+  Node<T>* l = this->list->next;
+  delete this->list;
+
+  this->list = l;
+}
+
+template <typename T>
+int LinkedList<T>::length() {
+  Node<T>* tmp = this->list;
+  int val = 0;
+  while(tmp != 0) {
+    tmp = tmp->next;
+    val++;
   }
+
+  return val;
+}
+
+template <typename T>
+Option<T> LinkedList<T>::get(int position) {
+  Node<T>* tmp = this->list;
+  int val = 0;
+  while(tmp != 0) {
+    if(val == position) {
+      return Option<T>(tmp->value);
+    }
+
+    tmp = tmp->next;
+    val++;
+  }
+
+  return Option<T>();
 }
