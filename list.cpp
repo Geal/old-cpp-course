@@ -5,40 +5,57 @@ using std::string;
 
 template<class T>
 class Option {
-  private:
-    T    value;
-    bool has_value;
-
   public:
-    bool is_some();
-    T    get();
-    Option<T>(T val);
-    Option<T>();
+    virtual bool is_some() = 0;
+    virtual T    get()     = 0;
 };
 
 template<class T>
-Option<T>::Option(T val) {
-  this->has_value = true;
-  this->value     = val;
+class None: public Option<T> {
+  public:
+                 None<T>();
+    virtual bool is_some();
+    virtual T    get();
+};
+
+template<class T>
+None<T>::None() {
 }
 
 template<class T>
-Option<T>::Option() {
-  this->has_value = false;
+bool None<T>::is_some() {
+  return false;
 }
 
 template<class T>
-bool Option<T>::is_some() {
-  return has_value;
+T None<T>::get() {
+  throw;
 }
 
 template<class T>
-T Option<T>::get() {
-  if(has_value) {
-    return value;
-  } else {
-    throw;
-  }
+class Some: public Option<T> {
+  private:
+    T value;
+
+  public:
+                 Some<T>(T val);
+    virtual bool is_some();
+    virtual T    get();
+};
+
+template<class T>
+Some<T>::Some(T val) {
+  this->value = val;
+}
+
+template<class T>
+bool Some<T>::is_some() {
+  return true;
+}
+
+template<class T>
+T Some<T>::get() {
+  return value;
 }
 
 template<class T>
@@ -53,11 +70,11 @@ class LinkedList {
   Node<T>* list;
 
   public:
-            LinkedList<T> (T val);
-  void      push(T val);
-  void      pop();
-  int       length();
-  Option<T> get(int position);
+             LinkedList<T> (T val);
+  void       push(T val);
+  void       pop();
+  int        length();
+  Option<T>* get(int position);
 };
 
 
@@ -67,9 +84,9 @@ int main() {
 
   l1.push("def");
 
-  Option<string> res = l1.get(1);
-  if(res.is_some()) {
-    std::cout << "val: " << res.get() << std::endl;
+  Option<string>* res = l1.get(1);
+  if(res->is_some()) {
+    std::cout << "val: " << res->get() << std::endl;
   }
 
   std::cout << "length: " << l1.length() << std::endl;
@@ -122,17 +139,17 @@ int LinkedList<T>::length() {
 }
 
 template <typename T>
-Option<T> LinkedList<T>::get(int position) {
+Option<T>* LinkedList<T>::get(int position) {
   Node<T>* tmp = this->list;
   int val = 0;
   while(tmp != 0) {
     if(val == position) {
-      return Option<T>(tmp->value);
+      return new Some<T>(tmp->value);
     }
 
     tmp = tmp->next;
     val++;
   }
 
-  return Option<T>();
+  return new None<T>();
 }
